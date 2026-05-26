@@ -4375,13 +4375,16 @@ async function pushToCloud(){
   if(!isSyncEnabled()||syncStatus.syncing)return;
   syncStatus.syncing=true;
   try{
-    const{apiKey,binId}=syncCfg;
-    const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}`,{
-      method:'PUT',
-      headers:{'X-Master-Key':apiKey,'Content-Type':'application/json'},
-      body:JSON.stringify(DB)
+    const res=await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({
+        action:'push_sheet',
+        data:JSON.stringify(DB)
+      }).toString()
     });
-    if(res.ok){
+    const json=await res.json();
+    if(json.success){
       syncStatus.lastSync=new Date();
       updateSyncTime();
       console.log('✅ Cloud push succeeded');
@@ -4395,12 +4398,10 @@ async function pushToCloud(){
 async function pullFromCloud(){
   if(!isSyncEnabled())return false;
   try{
-    const{apiKey,binId}=syncCfg;
-    const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`,{
-      headers:{'X-Master-Key':apiKey,'X-Bin-Meta':'false'}
-    });
+    const res=await fetch(GAS_URL+'?action=pull_sheet');
     const json=await res.json();
-    const remote=json.record||json;
+    if(!json.success)throw new Error(json.error||'Pull failed');
+    const remote=json.data||{};
     const merged={...DB};
     Object.keys(remote).forEach(k=>{
       const rv=remote[k],lv=DB[k];

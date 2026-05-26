@@ -146,41 +146,56 @@ function getOrCreateSheet() {
   return SpreadsheetApp.openById(sheetId);
 }
 
-/* ━━━ Cloud Sync: Google Sheet に push ━━━ */
+/* ━━━ Cloud Sync: JSONBin に push ━━━ */
 function handlePushSheet(params) {
   try {
-    const jsonData = params?.json || '{}';
+    const jsonData = params?.data || params?.json || '{}';
+    const apiKey = '$2a$10$izhs6odWY1yOkkqy2BBAfe3MudJPZZ73X3t9xwLUnkT6AnVvBFYte';
+    const binId = '6a0da0cf6610dd3ae876b58a';
 
-    const ss = getOrCreateSheet();
-    const sheet = ss.getActiveSheet();
+    const payload = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+    const res = UrlFetchApp.fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+      method: 'put',
+      headers: {
+        'X-Master-Key': apiKey,
+        'Content-Type': 'application/json'
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
 
-    // row 2（メイン）に保存
-    const range = sheet.getRange('B2:C2');
-    range.setValues([[jsonData, new Date().toISOString()]]);
-
-    return buildResponse(true, null, 'Pushed to Google Sheets');
+    if (res.getResponseCode() === 200) {
+      return buildResponse(true, null, 'Pushed to JSONBin');
+    } else {
+      return buildResponse(false, 'JSONBin push failed: ' + res.getResponseCode(), null);
+    }
 
   } catch (error) {
     return buildResponse(false, error.toString(), null);
   }
 }
 
-/* ━━━ Cloud Sync: Google Sheet から pull ━━━ */
+/* ━━━ Cloud Sync: JSONBin から pull ━━━ */
 function handlePullSheet() {
   try {
-    const ss = getOrCreateSheet();
-    const sheet = ss.getActiveSheet();
+    const apiKey = '$2a$10$izhs6odWY1yOkkqy2BBAfe3MudJPZZ73X3t9xwLUnkT6AnVvBFYte';
+    const binId = '6a0da0cf6610dd3ae876b58a';
 
-    // row 2 column B（メイン）から読み込み
-    const range = sheet.getRange('B2');
-    const jsonData = range.getValue();
+    const res = UrlFetchApp.fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+      headers: {
+        'X-Master-Key': apiKey,
+        'X-Bin-Meta': 'false'
+      },
+      muteHttpExceptions: true
+    });
 
-    if (!jsonData || jsonData.trim() === '') {
-      return { success: true, data: {} };
+    if (res.getResponseCode() !== 200) {
+      return { success: false, error: 'JSONBin pull failed: ' + res.getResponseCode(), data: null };
     }
 
-    const parsed = JSON.parse(jsonData);
-    return { success: true, data: parsed };
+    const json = JSON.parse(res.getContentText());
+    const data = json.record || json;
+    return { success: true, data: data };
 
   } catch (error) {
     return { success: false, error: error.toString(), data: null };
