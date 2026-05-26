@@ -2430,7 +2430,8 @@ function calMonthHTML(year,month){
         ?`background:${c.color};opacity:.8;border-left:2px solid rgba(255,255,255,.5)`
         :`background:${c.color}`;
       const tipTxt=e.virtual?'制作管理から自動反映':e.recur==='weekly'?'毎週繰り返し':e.recur==='monthly'?'毎月繰り返し':'';
-      return `<div class="cal-evt" style="${style}" onclick="${click}" title="${tipTxt}">${recurIcon}${e.title}</div>`;
+      const deleteBtn=e.virtual?`<span class="cal-evt-delete" onclick="event.stopPropagation();if(confirm('削除しますか？')) deleteVirtualEvent('${e.id}')" title="削除">×</span>`:'';
+      return `<div class="cal-evt" style="${style}" onclick="${click}" title="${tipTxt}">${recurIcon}${e.title}${deleteBtn}</div>`;
     }).join('');
     const more=de.length>3?`<div class="cal-more">+${de.length-3}</div>`:'';
     // スマホ用ドット（最大5個）
@@ -2903,10 +2904,7 @@ function deleteVirtualEvent(eventId){
     const sessId=eventId.replace('vsess-','');
     const sess=DB.sessions.find(s=>s.id===sessId);
     if(!sess) return;
-    // セッション内の全ての動画を削除
-    sess.videos=[];
-    // 動画がなくなったセッションは削除
-    DB.sessions=DB.sessions.filter(s=>s.videos&&s.videos.length>0);
+    sess.date=null;
     save();
     renderSessions();
     renderCal();
@@ -2944,8 +2942,10 @@ function deleteVideo(sessId,vidId){
   const sess=DB.sessions.find(s=>s.id===sessId);
   if(!sess||!sess.videos)return;
   sess.videos=sess.videos.filter(v=>v.id!==vidId);
-  // 動画がなくなったセッションは削除
-  DB.sessions=DB.sessions.filter(s=>s.videos&&s.videos.length>0);
+  // ビデオが全て削除されたらセッションも削除
+  if(sess.videos.length===0){
+    DB.sessions=DB.sessions.filter(s=>s.id!==sessId);
+  }
   save();
   renderSessions();
   renderCal();

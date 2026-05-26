@@ -2900,14 +2900,12 @@ function deleteVirtualEvent(eventId){
   if(!eventId) return;
 
   // Session-level delete: vsess-{sessId}
+  // 撮影日をクリア（セッションとビデオは残す）
   if(eventId.startsWith('vsess-')){
     const sessId=eventId.replace('vsess-','');
     const sess=DB.sessions.find(s=>s.id===sessId);
     if(!sess) return;
-    // セッション内の全ての動画を削除
-    sess.videos=[];
-    // 動画がなくなったセッションは削除
-    DB.sessions=DB.sessions.filter(s=>s.videos&&s.videos.length>0);
+    sess.date=null;
     save();
     renderSessions();
     renderCal();
@@ -2945,6 +2943,10 @@ function deleteVideo(sessId,vidId){
   const sess=DB.sessions.find(s=>s.id===sessId);
   if(!sess||!sess.videos)return;
   sess.videos=sess.videos.filter(v=>v.id!==vidId);
+  // ビデオが全て削除されたらセッションも削除
+  if(sess.videos.length===0){
+    DB.sessions=DB.sessions.filter(s=>s.id!==sessId);
+  }
   save();
   renderSessions();
   renderCal();
