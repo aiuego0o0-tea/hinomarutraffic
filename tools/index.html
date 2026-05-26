@@ -2900,6 +2900,7 @@ function deleteVirtualEvent(eventId){
   if(!eventId) return;
 
   // Session-level delete: vsess-{sessId}
+  // 撮影日をクリア（セッションとビデオは残す）
   if(eventId.startsWith('vsess-')){
     const sessId=eventId.replace('vsess-','');
     const sess=DB.sessions.find(s=>s.id===sessId);
