@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日の丸交通 SNS採用ダッシュボード</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --accent: #7c6af7;
+    --accent2: #f7a26a;
+    --green: #4ade80;
+    --red: #f87171;
+    --text: #e8eaf6;
+    --muted: #8b92b8;
+    --border: #2e3250;
+    --tiktok: #ff2d55;
+    --insta: #f7a26a;
+    --youtube: #ef4444;
+    --x: #38bdf8;
+    --line: #06c755;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+
+  /* ─── Layout ─── */
+  .container { max-width: 1400px; margin: 0 auto; padding: 0 24px 48px; }
+
+  /* ─── Header ─── */
+  .header {
+    background: linear-gradient(135deg, #131629 0%, #1a1d27 50%, #1e1535 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 32px;
+    margin-bottom: 32px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  .header-left h1 {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.02em;
+  }
+  .header-left .meta {
+    display: flex; gap: 16px; margin-top: 6px; flex-wrap: wrap;
+  }
+  .meta-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 3px 10px; border-radius: 20px; font-size: 12px; color: var(--muted);
+  }
+  .meta-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .header-goal {
+    background: linear-gradient(135deg, rgba(124,106,247,0.15), rgba(247,162,106,0.10));
+    border: 1px solid rgba(124,106,247,0.3);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 13px;
+    color: var(--text);
+    text-align: right;
+    max-width: 340px;
+  }
+  .header-goal strong { color: var(--accent2); }
+
+  /* ─── Section Title ─── */
+  .section { margin-bottom: 36px; }
+  .section-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--muted);
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .section-num {
+    background: var(--accent); color: #fff; border-radius: 50%;
+    width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; flex-shrink: 0;
+  }
+
+  /* ─── Cards ─── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+  }
+  .card-sm { padding: 16px 18px; }
+
+  /* ─── KPI Cards ─── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .kpi-card.line::before { background: var(--line); }
+  .kpi-card.obo::before { background: var(--accent); }
+  .kpi-card.hire::before { background: var(--accent2); }
+
+  .kpi-icon {
+    font-size: 28px; margin-bottom: 10px; display: block;
+  }
+  .kpi-label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .kpi-value-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .kpi-value { font-size: 36px; font-weight: 800; line-height: 1; }
+  .kpi-value.line { color: var(--line); }
+  .kpi-value.obo { color: var(--accent); }
+  .kpi-value.hire { color: var(--accent2); }
+  .kpi-unit { font-size: 16px; color: var(--muted); }
+  .kpi-target { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .kpi-target span { color: var(--text); font-weight: 600; }
+
+  .progress-wrap { margin: 12px 0 10px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  .progress-track {
+    height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; border-radius: 99px; transition: width 0.6s ease;
+  }
+  .progress-bar.line { background: linear-gradient(90deg, #06c755, #4ade80); }
+  .progress-bar.obo { background: linear-gradient(90deg, #7c6af7, #a89af7); }
+  .progress-bar.hire { background: linear-gradient(90deg, #f7a26a, #fbbf24); }
+
+  .kpi-saving {
+    background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.2);
+    border-radius: 8px; padding: 8px 12px; font-size: 11px; color: var(--green);
+    margin-top: 10px;
+  }
+
+  /* ─── Funnel ─── */
+  .funnel-wrap {
+    display: flex; align-items: stretch; gap: 0;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+  }
+  .funnel-step {
+    flex: 1; padding: 20px 14px; text-align: center;
+    border-right: 1px solid var(--border); position: relative;
+  }
+  .funnel-step:last-child { border-right: none; }
+  .funnel-step::after {
+    content: '▶'; position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
+    color: var(--border); font-size: 16px; z-index: 1;
+  }
+  .funnel-step:last-child::after { display: none; }
+  .funnel-step:hover { background: var(--surface2); }
+
+  .funnel-icon { font-size: 24px; margin-bottom: 8px; display: block; }
+  .funnel-name { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .funnel-num { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .funnel-sub { font-size: 10px; color: var(--muted); }
+  .funnel-bar-h {
+    margin-top: 10px; height: 4px; border-radius: 99px;
+    transition: width 0.6s;
+  }
+  .f1 .funnel-bar-h { background: #7c6af7; width: 100%; }
+  .f2 .funnel-bar-h { background: #a78bfa; width: 40%; margin: 10px auto 0; }
+  .f3 .funnel-bar-h { background: #06c755; width: 25%; margin: 10px auto 0; }
+  .f4 .funnel-bar-h { background: #f7a26a; width: 15%; margin: 10px auto 0; }
+  .f5 .funnel-bar-h { background: #f59e0b; width: 10%; margin: 10px auto 0; }
+  .f6 .funnel-bar-h { background: #4ade80; width: 6%; margin: 10px auto 0; }
+
+  /* ─── Tables ─── */
+  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); }
+  thead th {
+    background: var(--surface2); padding: 11px 14px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); text-align: center;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  thead th:first-child { text-align: left; }
+  tbody td {
+    padding: 9px 14px; border-bottom: 1px solid rgba(46,50,80,0.5);
+    text-align: center; font-size: 13px; color: var(--text);
+  }
+  tbody td:first-child { text-align: left; font-weight: 600; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(124,106,247,0.04); }
+  tbody tr.subtotal td { background: var(--surface2); font-weight: 700; color: var(--accent2); }
+  tbody tr.total td { background: rgba(124,106,247,0.12); font-weight: 800; color: var(--accent); }
+
+  .achieved { color: var(--green); font-weight: 700; }
+  .over { color: var(--green); font-weight: 800; }
+  .low { color: var(--red); }
+  .neutral { color: var(--muted); }
+
+  /* Editable input in table */
+  .cell-input {
+    background: transparent; border: none; border-bottom: 1px dashed var(--border);
+    color: var(--text); text-align: center; font-size: 13px; width: 60px;
+    font-family: inherit; padding: 2px 4px; outline: none;
+  }
+  .cell-input:focus { border-bottom-color: var(--accent); background: rgba(124,106,247,0.08); border-radius: 4px; }
+  .cell-input::placeholder { color: var(--border); }
+
+  /* ─── Platform Strategy Cards ─── */
+  .platform-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .platform-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 16px; position: relative; overflow: hidden;
+  }
+  .platform-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .platform-card.tiktok::before { background: var(--tiktok); }
+  .platform-card.insta::before { background: var(--insta); }
+  .platform-card.youtube::before { background: var(--youtube); }
+  .platform-card.xnote::before { background: var(--x); }
+
+  .platform-icon { font-size: 26px; margin-bottom: 8px; }
+  .platform-name { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+  .platform-name.tiktok { color: var(--tiktok); }
+  .platform-name.insta { color: var(--insta); }
+  .platform-name.youtube { color: var(--youtube); }
+  .platform-name.xnote { color: var(--x); }
+  .platform-purpose {
+    font-size: 11px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.08em; margin-bottom: 12px; font-weight: 600;
+  }
+  .platform-row { display: flex; flex-direction: column; gap: 8px; }
+  .platform-item { font-size: 12px; color: var(--muted); }
+  .platform-item strong { color: var(--text); display: block; margin-bottom: 2px; }
+  .platform-tag {
+    display: inline-block; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 2px 8px; font-size: 11px; margin: 2px 2px 0 0;
+    color: var(--text);
+  }
+  .cta-box {
+    margin-top: 12px; background: rgba(124,106,247,0.1); border: 1px solid rgba(124,106,247,0.25);
+    border-radius: 8px; padding: 8px 10px; font-size: 11px; color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ─── Cost Comparison ─── */
+  .cost-grid { display: grid; grid-template-columns: 1fr 60px 1fr; gap: 0; align-items: stretch; }
+  .cost-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px;
+  }
+  .cost-box.bad { border-color: rgba(248,113,113,0.3); }
+  .cost-box.good { border-color: rgba(74,222,128,0.3); }
+  .cost-vs {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 900; color: var(--muted);
+  }
+  .cost-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px; }
+  .cost-label.bad { color: var(--red); }
+  .cost-label.good { color: var(--green); }
+  .cost-item { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .cost-item:last-of-type { border-bottom: none; }
+  .cost-item-label { font-size: 12px; color: var(--muted); }
+  .cost-item-val { font-size: 16px; font-weight: 800; }
+  .cost-item-val.bad { color: var(--red); }
+  .cost-item-val.good { color: var(--green); }
+  .cost-item-val.accent { color: var(--accent); }
+
+  .saving-banner {
+    background: linear-gradient(135deg, rgba(74,222,128,0.12), rgba(124,106,247,0.12));
+    border: 1px solid rgba(74,222,128,0.3);
+    border-radius: 14px; padding: 20px 28px; margin-top: 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  }
+  .saving-banner .label { font-size: 13px; color: var(--muted); }
+  .saving-banner .amount { font-size: 42px; font-weight: 900; color: var(--green); letter-spacing: -0.02em; }
+  .saving-banner .note { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* ─── Persona Cards ─── */
+  .persona-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .persona-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 20px; display: flex; gap: 16px; align-items: flex-start;
+  }
+  .persona-avatar {
+    width: 52px; height: 52px; border-radius: 50%; background: var(--surface2);
+    display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0;
+  }
+  .persona-info { flex: 1; }
+  .persona-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .persona-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .persona-tag {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 2px 8px; font-size: 11px; color: var(--muted);
+  }
+
+  /* ─── Calendar ─── */
+  .calendar-grid {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+  }
+  .cal-header {
+    display: grid; grid-template-columns: 70px repeat(7, 1fr);
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+  }
+  .cal-header-cell {
+    padding: 10px 8px; text-align: center; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+    border-right: 1px solid var(--border);
+  }
+  .cal-header-cell:last-child { border-right: none; }
+  .cal-row {
+    display: grid; grid-template-columns: 70px repeat(7, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+  .cal-row:last-child { border-bottom: none; }
+  .cal-week-label {
+    padding: 10px 8px; font-size: 11px; font-weight: 700; color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    border-right: 1px solid var(--border); background: var(--surface2);
+    text-align: center; line-height: 1.4;
+  }
+  .cal-cell {
+    min-height: 80px; padding: 6px 6px; border-right: 1px solid var(--border);
+    vertical-align: top; position: relative;
+  }
+  .cal-cell:last-child { border-right: none; }
+  .cal-date { font-size: 10px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+  .cal-post {
+    border-radius: 5px; padding: 3px 6px; font-size: 10px; font-weight: 600;
+    margin-bottom: 3px; line-height: 1.3; cursor: default;
+  }
+  .cal-post.tiktok { background: rgba(255,45,85,0.18); color: #ff6b8a; border-left: 3px solid var(--tiktok); }
+  .cal-post.insta { background: rgba(247,162,106,0.18); color: #f7a26a; border-left: 3px solid var(--insta); }
+  .cal-post.youtube { background: rgba(239,68,68,0.18); color: #ef4444; border-left: 3px solid var(--youtube); }
+  .cal-post.x { background: rgba(56,189,248,0.18); color: #38bdf8; border-left: 3px solid var(--x); }
+  .cal-post.line-post { background: rgba(6,199,85,0.18); color: #06c755; border-left: 3px solid var(--line); }
+
+  /* ─── Journey ─── */
+  .journey-wrap {
+    display: flex; gap: 0; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+  }
+  .journey-step {
+    flex: 1; padding: 16px 12px; text-align: center; border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .journey-step:last-child { border-right: none; }
+  .journey-step::after {
+    content: '→'; position: absolute; right: -11px; top: 50%; transform: translateY(-50%);
+    color: var(--accent); font-size: 14px; z-index: 2; font-weight: 700;
+  }
+  .journey-step:last-child::after { display: none; }
+  .journey-icon { font-size: 22px; margin-bottom: 6px; }
+  .journey-label { font-size: 11px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .journey-desc { font-size: 10px; color: var(--muted); line-height: 1.4; }
+
+  /* ─── Target Segments ─── */
+  .target-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .target-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .target-age { font-size: 20px; font-weight: 800; color: var(--accent2); margin-bottom: 4px; }
+  .target-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .target-desc { font-size: 12px; color: var(--text); }
+
+  /* ─── Scrollbar ─── */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* ─── Util ─── */
+  .flex { display: flex; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .text-muted { color: var(--muted); }
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+  .text-accent { color: var(--accent); }
+  .text-accent2 { color: var(--accent2); }
+  .fw-700 { font-weight: 700; }
+  .fw-800 { font-weight: 800; }
+  .fs-12 { font-size: 12px; }
+  .fs-11 { font-size: 11px; }
+
+  /* ─── Tag legend ─── */
+  .legend { display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* Frequency badge */
+  .freq-badge {
+    display: inline-block; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--accent); font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+</style>
+</head>
+<body>
+
+<!-- ① HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <h1>🚕 日の丸交通 SNS採用ダッシュボード</h1>
+      <div class="meta">
+        <span class="meta-badge"><span class="dot"></span>日の丸交通株式会社</span>
+        <span class="meta-badge">📊 tea 運用支援中</span>
+        <span class="meta-badge">🗓️ 更新日：2026年5月18日</span>
+        <span class="meta-badge">📅 運用期間：2025年4月〜2026年3月</span>
+      </div>
+    </div>
+    <div class="header-goal">
+      <strong>最優先KPI：LINE登録者数を増やす</strong><br>
+      目標：LINE登録100名 → 自社応募増加 → 採用費大幅削減<br>
+      <span style="color:var(--muted);font-size:11px;">紹介会社依存からSNS自社採用へシフト</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ② KPI SUMMARY -->
+<div class="section">
+  <div class="section-title"><span class="section-num">2</span> KPIサマリー（年間目標対比）</div>
+  <div class="kpi-grid">
+
+    <!-- LINE登録 -->
+    <div class="kpi-card line">
+      <span class="kpi-icon">💬</span>
+      <div class="kpi-label">LINE 公式登録者数</div>
+      <div class="kpi-value-row">
+        <div class="kpi-value line">12</div>
+        <div class="kpi-unit">名</div>
+      </div>
+      <div class="kpi-target">年間目標：<span>100名</span>　（上期40名 / 下期60名）</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>達成率</span><span class="text-green fw-700">12%</span></div>
+        <div class="progress-track"><div class="progress-bar line" style="width:12%"></div></div>
+      </div>
+      <div class="kpi-saving">✅ LINE登録は採用の入口。全施策の最優先指標です。</div>
+    </div>
+
+    <!-- 応募 -->
+    <div class="kpi-card obo">
+      <span class="kpi-icon">📝</span>
+      <div class="kpi-label">応募者数</div>
+      <div class="kpi-value-row">
+        <div class="kpi-value obo">2</div>
+        <div class="kpi-unit">名</div>
+      </div>
+      <div class="kpi-target">年間目標：<span>20名</span></div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>達成率</span><span style="color:var(--accent);font-weight:700;">10%</span></div>
+        <div class="progress-track"><div class="progress-bar obo" style="width:10%"></div></div>
+      </div>
+      <div class="kpi-saving" style="background:rgba(124,106,247,0.08);border-color:rgba(124,106,247,0.2);color:var(--accent);">
+        📈 LINE登録→職場体験会→応募へのナーチャリングが鍵
+      </div>
+    </div>
+
+    <!-- 入社 -->
+    <div class="kpi-card hire">
+      <span class="kpi-icon">🤝</span>
+      <div class="kpi-label">入社者数</div>
+      <div class="kpi-value-row">
+        <div class="kpi-value hire">0</div>
+        <div class="kpi-unit">名</div>
+      </div>
+      <div class="kpi-target">年間目標：<span>3名</span></div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>達成率</span><span style="color:var(--muted);">0%</span></div>
+        <div class="progress-track"><div class="progress-bar hire" style="width:0%"></div></div>
+      </div>
+      <div class="kpi-saving" style="background:rgba(247,162,106,0.08);border-color:rgba(247,162,106,0.2);color:var(--accent2);">
+        💰 紹介会社経由：1名あたり推定70〜100万円のコスト削減チャンス
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ③ ADOPTION FUNNEL -->
+<div class="section">
+  <div class="section-title"><span class="section-num">3</span> 採用ファネル（SNS→LINE→採用）</div>
+  <div class="funnel-wrap">
+    <div class="funnel-step f1">
+      <span class="funnel-icon">📱</span>
+      <div class="funnel-name">SNS投稿</div>
+      <div class="funnel-num">—</div>
+      <div class="funnel-sub">TikTok/Instagram<br>YouTube/X&note</div>
+      <div class="funnel-bar-h"></div>
+    </div>
+    <div class="funnel-step f2">
+      <span class="funnel-icon">👆</span>
+      <div class="funnel-name">プロフィールクリック</div>
+      <div class="funnel-num">—</div>
+      <div class="funnel-sub">LINE誘導CTA<br>URL クリック</div>
+      <div class="funnel-bar-h"></div>
+    </div>
+    <div class="funnel-step f3">
+      <span class="funnel-icon">💬</span>
+      <div class="funnel-name">LINE登録</div>
+      <div class="funnel-num" style="color:var(--line);">12名</div>
+      <div class="funnel-sub">累計（4月〜）</div>
+      <div class="funnel-bar-h"></div>
+    </div>
+    <div class="funnel-step f4">
+      <span class="funnel-icon">🏢</span>
+      <div class="funnel-name">体験会・説明会</div>
+      <div class="funnel-num">—</div>
+      <div class="funnel-sub">LINE配信→集客</div>
+      <div class="funnel-bar-h"></div>
+    </div>
+    <div class="funnel-step f5">
+      <span class="funnel-icon">📝</span>
+      <div class="funnel-name">応募</div>
+      <div class="funnel-num" style="color:var(--accent);">2名</div>
+      <div class="funnel-sub">正式応募</div>
+      <div class="funnel-bar-h"></div>
+    </div>
+    <div class="funnel-step f6">
+      <span class="funnel-icon">🎉</span>
+      <div class="funnel-name">採用内定</div>
+      <div class="funnel-num" style="color:var(--accent2);">0名</div>
+      <div class="funnel-sub">目標 3名</div>
+      <div class="funnel-bar-h"></div>
+    </div>
+  </div>
+</div>
+
+<!-- カスタマージャーニー -->
+<div class="section">
+  <div class="section-title"><span class="section-num">3b</span> カスタマージャーニー</div>
+  <div class="journey-wrap">
+    <div class="journey-step">
+      <div class="journey-icon">📢</div>
+      <div class="journey-label">認知・発見</div>
+      <div class="journey-desc">TikTok・Instagram・YouTubeで初認知<br>「タクシー乗務員のリアル」</div>
+    </div>
+    <div class="journey-step">
+      <div class="journey-icon">❤️</div>
+      <div class="journey-label">興味・関心</div>
+      <div class="journey-desc">フォロー・保存・コメント<br>年収・働き方に関心</div>
+    </div>
+    <div class="journey-step">
+      <div class="journey-icon">🔍</div>
+      <div class="journey-label">情報収集</div>
+      <div class="journey-desc">プロフィールクリック<br>公式LINE登録・FAQ確認</div>
+    </div>
+    <div class="journey-step">
+      <div class="journey-icon">⚖️</div>
+      <div class="journey-label">比較・検討</div>
+      <div class="journey-desc">LINE配信で体験会案内<br>他社との差別化訴求</div>
+    </div>
+    <div class="journey-step">
+      <div class="journey-icon">✏️</div>
+      <div class="journey-label">応募</div>
+      <div class="journey-desc">職場体験会参加後<br>正式応募へ</div>
+    </div>
+    <div class="journey-step">
+      <div class="journey-icon">🗣️</div>
+      <div class="journey-label">拡散</div>
+      <div class="journey-desc">入社後シェア・紹介<br>SNSへの口コミ効果</div>
+    </div>
+  </div>
+</div>
+
+<!-- ④ 月別KPIトラッカー -->
+<div class="section">
+  <div class="section-title"><span class="section-num">4</span> 月別KPIトラッカー（2025年4月〜2026年3月）</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>月</th>
+          <th>LINE登録<br>目標</th>
+          <th>LINE登録<br>実績</th>
+          <th>達成率</th>
+          <th>LINE<br>累計</th>
+          <th>応募<br>目標</th>
+          <th>応募<br>実績</th>
+          <th>入社<br>目標</th>
+          <th>入社<br>実績</th>
+          <th>メモ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 上期 -->
+        <tr>
+          <td>🌸 4月</td>
+          <td>8名</td>
+          <td class="text-green fw-700">12名</td>
+          <td class="over">150%</td>
+          <td class="text-green fw-700">12名</td>
+          <td>2名</td>
+          <td class="text-accent">2名</td>
+          <td>0名</td>
+          <td>0名</td>
+          <td style="color:var(--muted);font-size:11px;">運用開始月・好調スタート</td>
+        </tr>
+        <tr>
+          <td>🌿 5月</td>
+          <td>6名</td>
+          <td><input class="cell-input" type="text" placeholder="—" value=""></td>
+          <td class="neutral">—</td>
+          <td><input class="cell-input" type="text" placeholder="—" value=""></td>
+          <td>2名</td>
+          <td><input class="cell-input" type="text" placeholder="—" value=""></td>
+          <td>0名</td>
+          <td><input class="cell-input" type="text" placeholder="—" value=""></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>☀️ 6月</td>
+          <td>6名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td class="neutral">—</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>2名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>1名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🌊 7月</td>
+          <td>5名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td class="neutral">—</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>2名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>0名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🏖️ 8月</td>
+          <td>7名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td class="neutral">—</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>3名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>1名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🍂 9月</td>
+          <td>8名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td class="neutral">—</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>3名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>1名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td></td>
+        </tr>
+        <tr class="subtotal">
+          <td>📊 上期計（4〜9月）</td>
+          <td>40名</td>
+          <td>12名〜</td>
+          <td>30%〜</td>
+          <td>—</td>
+          <td>14名</td>
+          <td>2名〜</td>
+          <td>3名</td>
+          <td>0名〜</td>
+          <td></td>
+        </tr>
+        <!-- 下期 -->
+        <tr>
+          <td>🍁 10月</td>
+          <td>10名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td class="neutral">—</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>2名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>0名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>❄️ 11月</td>
+          <td>12名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td class="neutral">—</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>2名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>0名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🎄 12月</td>
+          <td>10名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td class="neutral">—</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>2名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>0名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🎍 1月</td>
+          <td>10名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td class="neutral">—</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>2名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>0名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🌸 2月</td>
+          <td>9名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td class="neutral">—</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>2名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>0名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🌷 3月</td>
+          <td>9名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td class="neutral">—</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>2名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td>0名</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td></td>
+        </tr>
+        <tr class="subtotal">
+          <td>📊 下期計（10〜3月）</td>
+          <td>60名</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td>12名</td>
+          <td>—</td>
+          <td>0名</td>
+          <td>—</td>
+          <td></td>
+        </tr>
+        <tr class="total">
+          <td>🏆 年間合計</td>
+          <td>100名</td>
+          <td>12名〜</td>
+          <td>12%〜</td>
+          <td>—</td>
+          <td>20名</td>
+          <td>2名〜</td>
+          <td>3名</td>
+          <td>0名〜</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ⑤ 週次SNS実績テーブル -->
+<div class="section">
+  <div class="section-title"><span class="section-num">5</span> 週次SNS実績トラッカー（毎週金曜更新）</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>週</th>
+          <th>TikTok<br>視聴数</th>
+          <th>TikTok<br>フォロワー</th>
+          <th>Instagram<br>閲覧数</th>
+          <th>Instagram<br>フォロワー</th>
+          <th>X<br>閲覧数</th>
+          <th>YouTube<br>登録者</th>
+          <th>LINE登録<br>（週間）</th>
+          <th>LINE登録<br>（累計）</th>
+          <th>URLクリック<br>合計</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>第1週 4/7</td>
+          <td><input class="cell-input" type="text" placeholder="—" value="3,200"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="45"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="1,100"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="38"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="520"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="12"></td>
+          <td class="text-green fw-700">4名</td>
+          <td class="text-green fw-700">4名</td>
+          <td><input class="cell-input" type="text" placeholder="—" value="86"></td>
+        </tr>
+        <tr>
+          <td>第2週 4/14</td>
+          <td><input class="cell-input" type="text" placeholder="—" value="4,800"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="62"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="1,450"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="55"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="680"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="18"></td>
+          <td class="text-green fw-700">5名</td>
+          <td class="text-green fw-700">9名</td>
+          <td><input class="cell-input" type="text" placeholder="—" value="112"></td>
+        </tr>
+        <tr>
+          <td>第3週 4/21</td>
+          <td><input class="cell-input" type="text" placeholder="—" value="3,600"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="74"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="980"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="68"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="410"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="21"></td>
+          <td class="text-green fw-700">3名</td>
+          <td class="text-green fw-700">12名</td>
+          <td><input class="cell-input" type="text" placeholder="—" value="78"></td>
+        </tr>
+        <tr>
+          <td>第4週 4/28</td>
+          <td><input class="cell-input" type="text" placeholder="—" value="2,900"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="80"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="760"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="72"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="300"></td>
+          <td><input class="cell-input" type="text" placeholder="—" value="22"></td>
+          <td class="neutral">0名</td>
+          <td class="text-green fw-700">12名</td>
+          <td><input class="cell-input" type="text" placeholder="—" value="45"></td>
+        </tr>
+        <tr>
+          <td>第5週 5/12</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>第6週 5/19</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>第7週 5/26</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>第8週 6/2</td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+          <td><input class="cell-input" type="text" placeholder="—"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ⑥ プラットフォーム別戦略 -->
+<div class="section">
+  <div class="section-title"><span class="section-num">6</span> プラットフォーム別SNS戦略</div>
+  <div class="platform-grid">
+
+    <div class="platform-card tiktok">
+      <div class="platform-icon">🎵</div>
+      <div class="platform-name tiktok">TikTok</div>
+      <div class="platform-purpose">採用認知・バズ獲得</div>
+      <div class="freq-badge">週3〜5本</div>
+      <div class="platform-row">
+        <div class="platform-item">
+          <strong>コンテンツ TOP3</strong>
+          <span class="platform-tag">乗務員の1日ルーティン</span>
+          <span class="platform-tag">リアル年収公開</span>
+          <span class="platform-tag">深夜勤務のメリット</span>
+        </div>
+        <div class="platform-item">
+          <strong>ターゲット</strong>
+          20〜35歳 転職検討中
+        </div>
+        <div class="platform-item">
+          <strong>フォーマット</strong>
+          縦型15〜60秒・テロップ必須
+        </div>
+      </div>
+      <div class="cta-box">📍 プロフィールにLINE登録リンク固定</div>
+    </div>
+
+    <div class="platform-card insta">
+      <div class="platform-icon">📸</div>
+      <div class="platform-name insta">Instagram</div>
+      <div class="platform-purpose">信頼醸成・ブランド構築</div>
+      <div class="freq-badge">週3本（リール中心）</div>
+      <div class="platform-row">
+        <div class="platform-item">
+          <strong>コンテンツ TOP3</strong>
+          <span class="platform-tag">転職前の不安Q&A</span>
+          <span class="platform-tag">50代転職成功インタビュー</span>
+          <span class="platform-tag">職場体験会レポート</span>
+        </div>
+        <div class="platform-item">
+          <strong>ターゲット</strong>
+          30〜45歳 転職検討中
+        </div>
+        <div class="platform-item">
+          <strong>フォーマット</strong>
+          リール＋カルーセル投稿
+        </div>
+      </div>
+      <div class="cta-box">📍 リンク欄にLINE登録URL・固定ストーリー</div>
+    </div>
+
+    <div class="platform-card youtube">
+      <div class="platform-icon">▶️</div>
+      <div class="platform-name youtube">YouTube</div>
+      <div class="platform-purpose">検索流入・詳細情報提供</div>
+      <div class="freq-badge">週1本（長尺）</div>
+      <div class="platform-row">
+        <div class="platform-item">
+          <strong>コンテンツ TOP3</strong>
+          <span class="platform-tag">社員インタビュー</span>
+          <span class="platform-tag">二種免許取得の流れ</span>
+          <span class="platform-tag">未経験3ヶ月の変化</span>
+        </div>
+        <div class="platform-item">
+          <strong>ターゲット</strong>
+          30〜55歳 情報収集層
+        </div>
+        <div class="platform-item">
+          <strong>フォーマット</strong>
+          5〜15分・概要欄にLINEリンク
+        </div>
+      </div>
+      <div class="cta-box">📍 概要欄・エンドカードにLINE登録誘導</div>
+    </div>
+
+    <div class="platform-card xnote">
+      <div class="platform-icon">✍️</div>
+      <div class="platform-name xnote">X & note</div>
+      <div class="platform-purpose">情報発信・SEO流入</div>
+      <div class="freq-badge">X：毎日／note：週1</div>
+      <div class="platform-row">
+        <div class="platform-item">
+          <strong>コンテンツ TOP3</strong>
+          <span class="platform-tag">タクシー業界豆知識</span>
+          <span class="platform-tag">採用情報・体験会告知</span>
+          <span class="platform-tag">乗務員の声・働き方ヒント</span>
+        </div>
+        <div class="platform-item">
+          <strong>ターゲット</strong>
+          検索ユーザー・情報感度高め
+        </div>
+        <div class="platform-item">
+          <strong>フォーマット</strong>
+          X：短文＋画像　note：1,500字〜
+        </div>
+      </div>
+      <div class="cta-box">📍 固定ポストにLINE登録リンク</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ⑦ 採用費削減試算 -->
+<div class="section">
+  <div class="section-title"><span class="section-num">7</span> 採用費削減試算（紹介会社 vs SNS運用）</div>
+  <div class="cost-grid">
+    <div class="cost-box bad">
+      <div class="cost-label bad">❌ 紹介会社経由（従来）</div>
+      <div class="cost-item">
+        <span class="cost-item-label">採用1名あたり紹介料</span>
+        <span class="cost-item-val bad">70〜100万円</span>
+      </div>
+      <div class="cost-item">
+        <span class="cost-item-label">年3名採用コスト（概算）</span>
+        <span class="cost-item-val bad">210〜300万円</span>
+      </div>
+      <div class="cost-item">
+        <span class="cost-item-label">採用後の定着率リスク</span>
+        <span class="cost-item-val bad">高（コスト回収できない可能性）</span>
+      </div>
+      <div class="cost-item">
+        <span class="cost-item-label">会社ブランド形成</span>
+        <span class="cost-item-val" style="color:var(--muted);font-size:13px;">✕ 蓄積されない</span>
+      </div>
+    </div>
+
+    <div class="cost-vs">VS</div>
+
+    <div class="cost-box good">
+      <div class="cost-label good">✅ tea SNS採用運用</div>
+      <div class="cost-item">
+        <span class="cost-item-label">月額運用費</span>
+        <span class="cost-item-val accent">XX万円/月</span>
+      </div>
+      <div class="cost-item">
+        <span class="cost-item-label">年間コスト（概算）</span>
+        <span class="cost-item-val accent">大幅削減</span>
+      </div>
+      <div class="cost-item">
+        <span class="cost-item-label">採用後の定着率</span>
+        <span class="cost-item-val good">高（企業理解が深い応募者）</span>
+      </div>
+      <div class="cost-item">
+        <span class="cost-item-label">会社ブランド形成</span>
+        <span class="cost-item-val good">✅ SNS資産として蓄積</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="saving-banner">
+    <div>
+      <div class="label">紹介会社3名採用との比較・推定節約額</div>
+      <div class="amount">最大 -300万円</div>
+      <div class="note">※ SNS運用を通じた自社採用3名達成時の試算。紹介料100万円×3名との比較。</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:48px;">💰</div>
+      <div style="font-size:12px;color:var(--green);font-weight:700;">採用コストを<br>資産に変える</div>
+    </div>
+  </div>
+</div>
+
+<!-- ターゲット＆ペルソナ -->
+<div class="section">
+  <div class="section-title"><span class="section-num">7b</span> ターゲット層・採用ペルソナ</div>
+  <div class="target-grid" style="margin-bottom:16px;">
+    <div class="target-card">
+      <div class="target-age">30〜45歳</div>
+      <div class="target-label">メインターゲット（東京・一都三県）</div>
+      <div class="target-desc">転職意欲の高い年齢層。収入・安定・働き方を重視。ルート営業・製造職からの転職が多い。</div>
+    </div>
+    <div class="target-card">
+      <div class="target-age">50歳〜</div>
+      <div class="target-label">シニア転職層</div>
+      <div class="target-desc">再就職・定年後の第二キャリアとしてタクシーを検討。安定収入と社会参加を求める。</div>
+    </div>
+    <div class="target-card">
+      <div class="target-age">20〜30歳</div>
+      <div class="target-label">若年層（大学生・高卒）</div>
+      <div class="target-desc">TikTokで接触。早期収入・二種免許取得サポートに魅力を感じる層。</div>
+    </div>
+  </div>
+
+  <div class="persona-grid">
+    <div class="persona-card">
+      <div class="persona-avatar">👔</div>
+      <div class="persona-info">
+        <div class="persona-name">ペルソナ①：田中さん（33歳）</div>
+        <div style="font-size:12px;color:var(--muted);">ルート営業職 → タクシー乗務員への転職検討</div>
+        <div class="persona-tags">
+          <span class="persona-tag">年収420万円</span>
+          <span class="persona-tag">東京都在住</span>
+          <span class="persona-tag">既婚</span>
+          <span class="persona-tag">TikTok利用あり</span>
+          <span class="persona-tag">休日の安定を求める</span>
+        </div>
+      </div>
+    </div>
+    <div class="persona-card">
+      <div class="persona-avatar">🏭</div>
+      <div class="persona-info">
+        <div class="persona-name">ペルソナ②：鈴木さん（40歳）</div>
+        <div style="font-size:12px;color:var(--muted);">製造職 → 長距離通勤解消・収入アップ目的で転職検討</div>
+        <div class="persona-tags">
+          <span class="persona-tag">年収500万円</span>
+          <span class="persona-tag">既婚・子2人</span>
+          <span class="persona-tag">一都三県在住</span>
+          <span class="persona-tag">YouTube閲覧</span>
+          <span class="persona-tag">家族のために安定重視</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑧ コンテンツカレンダー（5月） -->
+<div class="section">
+  <div class="section-title"><span class="section-num">8</span> コンテンツカレンダー（2026年5月）</div>
+
+  <div class="legend" style="margin-bottom:14px;">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--tiktok)"></div>TikTok</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--insta)"></div>Instagram</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--youtube)"></div>YouTube</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--x)"></div>X/note</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--line)"></div>LINE配信</div>
+  </div>
+
+  <div class="calendar-grid">
+    <div class="cal-header">
+      <div class="cal-header-cell" style="font-size:10px;">週</div>
+      <div class="cal-header-cell">月</div>
+      <div class="cal-header-cell">火</div>
+      <div class="cal-header-cell">水</div>
+      <div class="cal-header-cell">木</div>
+      <div class="cal-header-cell">金</div>
+      <div class="cal-header-cell">土</div>
+      <div class="cal-header-cell">日</div>
+    </div>
+
+    <!-- 第1週 -->
+    <div class="cal-row">
+      <div class="cal-week-label">第1週<br>5/5〜</div>
+      <div class="cal-cell">
+        <div class="cal-date">5</div>
+        <div class="cal-post x">X: こどもの日特別投稿</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">6</div>
+        <div class="cal-post tiktok">TikTok: 乗務員の1日ルーティン</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">7</div>
+        <div class="cal-post insta">IG: 職場の雰囲気紹介</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">8</div>
+        <div class="cal-post tiktok">TikTok: リアル年収公開</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">9</div>
+        <div class="cal-post x">X: 週次SNS集計更新</div>
+        <div class="cal-post insta">IG Stories: LINE誘導</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">10</div>
+        <div class="cal-post youtube">YouTube: 未経験3ヶ月の変化</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">11</div>
+        <div class="cal-post tiktok">TikTok: 深夜勤務のメリット</div>
+      </div>
+    </div>
+
+    <!-- 第2週 -->
+    <div class="cal-row">
+      <div class="cal-week-label">第2週<br>5/12〜</div>
+      <div class="cal-cell">
+        <div class="cal-date">12</div>
+        <div class="cal-post insta">IG Reel: 転職前の不安Q&A</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">13</div>
+        <div class="cal-post tiktok">TikTok: 女性乗務員の1日</div>
+        <div class="cal-post x">note: タクシー業界の真実</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">14</div>
+        <div class="cal-post line-post">LINE配信: 職場体験会案内</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">15</div>
+        <div class="cal-post tiktok">TikTok: 50代転職成功者</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">16</div>
+        <div class="cal-post x">X: 週次集計更新</div>
+        <div class="cal-post insta">IG: フォロワーQ&A回答</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">17</div>
+        <div class="cal-post youtube">YouTube: 社員インタビュー①</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">18</div>
+        <div class="cal-post tiktok">TikTok: 二種免許取得の流れ</div>
+      </div>
+    </div>
+
+    <!-- 第3週 -->
+    <div class="cal-row">
+      <div class="cal-week-label">第3週<br>5/19〜</div>
+      <div class="cal-cell">
+        <div class="cal-date">19</div>
+        <div class="cal-post insta">IG: 職場体験会レポート</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">20</div>
+        <div class="cal-post tiktok">TikTok: 給与明細公開</div>
+        <div class="cal-post x">X: 求人情報シェア</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">21</div>
+        <div class="cal-post insta">IG Carousel: 入社までの流れ</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">22</div>
+        <div class="cal-post tiktok">TikTok: 乗務員あるある5選</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">23</div>
+        <div class="cal-post x">X: 週次集計更新</div>
+        <div class="cal-post line-post">LINE: 体験会リマインド</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">24</div>
+        <div class="cal-post youtube">YouTube: 二種免許取得サポート解説</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">25</div>
+        <div class="cal-post tiktok">TikTok: 休日の過ごし方</div>
+      </div>
+    </div>
+
+    <!-- 第4週 -->
+    <div class="cal-row">
+      <div class="cal-week-label">第4週<br>5/26〜</div>
+      <div class="cal-cell">
+        <div class="cal-date">26</div>
+        <div class="cal-post insta">IG: 先輩乗務員メッセージ</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">27</div>
+        <div class="cal-post tiktok">TikTok: 転職で変わった生活</div>
+        <div class="cal-post x">note: タクシー転職ガイド</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">28</div>
+        <div class="cal-post line-post">LINE: 6月体験会・説明会案内</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">29</div>
+        <div class="cal-post tiktok">TikTok: タクシー豆知識10選</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">30</div>
+        <div class="cal-post x">X: 月次まとめ投稿</div>
+        <div class="cal-post insta">IG: 月次ハイライト</div>
+      </div>
+      <div class="cal-cell">
+        <div class="cal-date">31</div>
+        <div class="cal-post youtube">YouTube: 50代転職成功インタビュー</div>
+      </div>
+      <div class="cal-cell" style="background:rgba(46,50,80,0.15);">
+        <div class="cal-date" style="color:rgba(139,146,184,0.3);">—</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- フッター -->
+<div style="text-align:center;padding:32px 0 16px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);">
+  <div style="font-size:16px;margin-bottom:8px;">日の丸交通株式会社 × tea SNS採用支援</div>
+  <div>最終更新：2026年5月18日 ／ 次回更新：毎週金曜日（週次集計反映）</div>
+  <div style="margin-top:8px;color:rgba(139,146,184,0.5);">このダッシュボードはtea内部管理ツールです。無断転用禁止。</div>
+</div>
+
+</div><!-- /container -->
+
+</body>
+</html>

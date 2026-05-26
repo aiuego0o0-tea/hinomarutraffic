@@ -1,0 +1,16 @@
+{
+  "name": "tea-line-bot",
+  "version": "1.0.0",
+  "description": "tea LINE Bot — ソーシャル交通ほめ丸会社チーム用AIアシスタント",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@line/bot-sdk": "^9.5.0"
+  },
+  "devDependencies": {
+    "vercel": "^37.0.0"
+  }
+}
