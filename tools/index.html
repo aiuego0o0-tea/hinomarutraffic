@@ -2883,12 +2883,12 @@ function saveSession(){
     loc:document.getElementById('sessLoc').value.trim(),
     note:document.getElementById('sessNote').value.trim(),videos};
   DB.sessions=sessEditId?DB.sessions.map(x=>x.id===sessEditId?sess:x):[...DB.sessions,sess];
-  save();closeModal('sessionModal');renderSessions();renderCalendar();
+  save();closeModal('sessionModal');renderSessions();renderCal();
 }
 function deleteSession(){
   if(!sessEditId)return;
   DB.sessions=DB.sessions.filter(x=>x.id!==sessEditId);
-  save();closeModal('sessionModal');renderSessions();renderCalendar();
+  save();closeModal('sessionModal');renderSessions();renderCal();
 }
 function deleteVirtualEvent(eventId){
   if(!eventId) return;
@@ -2904,7 +2904,7 @@ function deleteVirtualEvent(eventId){
     DB.sessions=DB.sessions.filter(s=>s.videos&&s.videos.length>0);
     save();
     renderSessions();
-    renderCalendar();
+    renderCal();
     return;
   }
 
@@ -2932,7 +2932,7 @@ function deleteVirtualEvent(eventId){
     delete vid.steps[stepKey];
     save();
     renderSessions();
-    renderCalendar();
+    renderCal();
   }
 }
 function deleteVideo(sessId,vidId){
@@ -2943,7 +2943,7 @@ function deleteVideo(sessId,vidId){
   DB.sessions=DB.sessions.filter(s=>s.videos&&s.videos.length>0);
   save();
   renderSessions();
-  renderCalendar();
+  renderCal();
 }
 function completeSession(sessId){
   if(!confirm('このセッションを完了してアーカイブに移動しますか？'))return;
@@ -2955,7 +2955,7 @@ function completeSession(sessId){
   save();
   renderSessions();
   renderArchive();
-  renderCalendar();
+  renderCal();
 }
 function openVideoDetail(sessId,vidId){
   // Jump to proposal with this video's linked plan
