@@ -2167,7 +2167,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP'
 /* ━━━━━━━━━━━━━━━━━━━━━━━━
    GLOBAL CONFIG
 ━━━━━━━━━━━━━━━━━━━━━━━━ */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzZ10oen7Ev8PC9oVDSPuMnGRaWGmOf5LL-cVxB0sfJoULlo4U5-ieyAdA5RmEhlwRzrA/exec';
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━
    DATA LAYER
@@ -4353,7 +4352,7 @@ function deleteManualItem(id){
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━
-   CLOUD SYNC (Google Sheets via GAS)
+   CLOUD SYNC (JSONBin.io)
 ━━━━━━━━━━━━━━━━━━━━━━━━ */
 const SYNC_CFG_KEY='homemaru_sync_v1';
 let syncCfg={apiKey:'',binId:''};
@@ -4366,21 +4365,23 @@ function loadSyncCfg(){
 function saveSyncCfg(){
   localStorage.setItem(SYNC_CFG_KEY,JSON.stringify(syncCfg));
 }
-// Cloud Sync enabled by default - GAS handles all syncing automatically
-function isSyncEnabled(){return true;}
+function isSyncEnabled(){return !!(syncCfg.apiKey&&syncCfg.binId);}
 
 /* クラウドへ保存 */
 async function pushToCloud(){
   if(!isSyncEnabled()||syncStatus.syncing)return;
   syncStatus.syncing=true;
   try{
-    const params=new URLSearchParams();
-    params.append('action','push_cloud');
-    params.append('data',JSON.stringify(DB));
-
-    const res=await fetch(GAS_URL,{method:'POST',body:params});
-    const json=await res.json();
-    if(json.success){
+    const url=`https://api.jsonbin.io/v3/b/${syncCfg.binId}`;
+    const res=await fetch(url,{
+      method:'PUT',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Master-Key':syncCfg.apiKey
+      },
+      body:JSON.stringify(DB)
+    });
+    if(res.ok){
       syncStatus.lastSync=new Date();
       updateSyncTime();
     }
@@ -4392,14 +4393,15 @@ async function pushToCloud(){
 async function pullFromCloud(){
   if(!isSyncEnabled())return false;
   try{
-    const params=new URLSearchParams();
-    params.append('action','pull_cloud');
+    const url=`https://api.jsonbin.io/v3/b/${syncCfg.binId}`;
+    const res=await fetch(url,{
+      method:'GET',
+      headers:{'X-Master-Key':syncCfg.apiKey}
+    });
+    if(!res.ok)return false;
 
-    const res=await fetch(GAS_URL,{method:'POST',body:params});
     const json=await res.json();
-    if(!json.success)return false;
-
-    const remote=JSON.parse(json.data||'{}');
+    const remote=json.record||{};
     // スマートマージ: ローカルデータが多い場合は保持する
     const merged={...DB};
     Object.keys(remote).forEach(k=>{
