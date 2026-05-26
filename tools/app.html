@@ -2167,7 +2167,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP'
 /* ━━━━━━━━━━━━━━━━━━━━━━━━
    GLOBAL CONFIG
 ━━━━━━━━━━━━━━━━━━━━━━━━ */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyR6_kAOdW1SbCDPAleT6-EqqGEjxR2oT3CNCPUPZ0eyR2WGLwlzfqP4V48GGCg3W-T/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzZ10oen7Ev8PC9oVDSPuMnGRaWGmOf5LL-cVxB0sfJoULlo4U5-ieyAdA5RmEhlwRzrA/exec';
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━
    DATA LAYER
@@ -3467,7 +3467,7 @@ function openInGoogleDocs() {
     return;
   }
 
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbyR6_kAOdW1SbCDPAleT6-EqqGEjxR2oT3CNCPUPZ0eyR2WGLwlzfqP4V48GGCg3W-T/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzZ10oen7Ev8PC9oVDSPuMnGRaWGmOf5LL-cVxB0sfJoULlo4U5-ieyAdA5RmEhlwRzrA/exec';
 
   // ポップアップブロック対策：先に空タブを開く
   const newWindow = window.open('', '_blank');
@@ -4590,9 +4590,7 @@ renderHome();
 // URLハッシュの自動接続機能はデフォルトで非アクティブ
 // ユーザーが手動で「チーム接続」ボタンをクリックした場合のみ実行
 
-// タブに戻ってきた時の自動同期を無効化（CORS エラー防止）
-// ユーザーが「今すぐ同期」ボタンを手動でクリックした場合のみ実行
-/*
+// タブに戻ってきた時の自動同期（Google Sheets は CORS 対応）
 document.addEventListener('visibilitychange',()=>{
   if(!document.hidden&&isSyncEnabled()) pullFromCloud().then(ok=>{
     if(ok){
@@ -4601,7 +4599,6 @@ document.addEventListener('visibilitychange',()=>{
     }
   }).catch(e=>console.warn('Visibility sync error',e));
 });
-*/
 
 document.addEventListener('input',e=>{
   if(e.target.closest('.tab-pane#tab-proposal'))renderProposal();
