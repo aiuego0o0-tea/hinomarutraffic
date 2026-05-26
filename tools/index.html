@@ -4352,56 +4352,53 @@ function deleteManualItem(id){
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━
-   CLOUD SYNC (JSONBin.io)
+   CLOUD SYNC (Google Sheets via GAS)
 ━━━━━━━━━━━━━━━━━━━━━━━━ */
-const SYNC_CFG_KEY='homemaru_sync_v1';
-let syncCfg={apiKey:'',binId:''};
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzZ10oen7Ev8PC9oVDSPuMnGRaWGmOf5LL-cVxB0sfJoULlo4U5-ieyAdA5RmEhlwRzrA/exec';
 let syncStatus={lastSync:null,syncing:false};
 
-function loadSyncCfg(){
-  const s=localStorage.getItem(SYNC_CFG_KEY);
-  if(s) try{syncCfg=JSON.parse(s);}catch(e){}
-}
-function saveSyncCfg(){
-  localStorage.setItem(SYNC_CFG_KEY,JSON.stringify(syncCfg));
-}
-function isSyncEnabled(){return !!(syncCfg.apiKey&&syncCfg.binId);}
+function isSyncEnabled(){return true;}
 
 /* クラウドへ保存 */
-async function pushToCloud(){
+function pushToCloud(){
   if(!isSyncEnabled()||syncStatus.syncing)return;
   syncStatus.syncing=true;
   try{
-    const url=`https://api.jsonbin.io/v3/b/${syncCfg.binId}`;
-    const res=await fetch(url,{
-      method:'PUT',
-      headers:{
-        'Content-Type':'application/json',
-        'X-Master-Key':syncCfg.apiKey
-      },
-      body:JSON.stringify(DB)
-    });
-    if(res.ok){
-      syncStatus.lastSync=new Date();
-      updateSyncTime();
-    }
+    const form=document.createElement('form');
+    form.method='POST';
+    form.action=GAS_URL;
+    form.style.display='none';
+
+    const inp1=document.createElement('input');
+    inp1.name='action';
+    inp1.value='push_sheet';
+    form.appendChild(inp1);
+
+    const inp2=document.createElement('input');
+    inp2.name='data';
+    inp2.value=JSON.stringify(DB);
+    form.appendChild(inp2);
+
+    document.body.appendChild(form);
+    form.submit();
+    form.remove();
+
+    syncStatus.lastSync=new Date();
+    updateSyncTime();
   }catch(e){console.warn('Cloud push failed',e);}
   syncStatus.syncing=false;
 }
 
-/* クラウドから読み込み（JSONBin） */
+/* クラウドから読み込み（GAS） */
 async function pullFromCloud(){
   if(!isSyncEnabled())return false;
   try{
-    const url=`https://api.jsonbin.io/v3/b/${syncCfg.binId}`;
-    const res=await fetch(url,{
-      method:'GET',
-      headers:{'X-Master-Key':syncCfg.apiKey}
-    });
+    const url=GAS_URL+'?action=pull_sheet';
+    const res=await fetch(url);
     if(!res.ok)return false;
 
     const json=await res.json();
-    const remote=json.record||{};
+    const remote=json.data||{};
     // スマートマージ: ローカルデータが多い場合は保持する
     const merged={...DB};
     Object.keys(remote).forEach(k=>{
