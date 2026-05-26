@@ -2167,6 +2167,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP'
 /* ━━━━━━━━━━━━━━━━━━━━━━━━
    GLOBAL CONFIG
 ━━━━━━━━━━━━━━━━━━━━━━━━ */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzZ10oen7Ev8PC9oVDSPuMnGRaWGmOf5LL-cVxB0sfJoULlo4U5-ieyAdA5RmEhlwRzrA/exec';
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━
    DATA LAYER
@@ -2899,7 +2900,6 @@ function deleteVirtualEvent(eventId){
   if(!eventId) return;
 
   // Session-level delete: vsess-{sessId}
-  // 撮影日をクリア（セッションとビデオは残す）
   if(eventId.startsWith('vsess-')){
     const sessId=eventId.replace('vsess-','');
     const sess=DB.sessions.find(s=>s.id===sessId);
@@ -4352,47 +4352,50 @@ function deleteManualItem(id){
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━
-   CLOUD SYNC (Google Sheets via GAS)
+   CLOUD SYNC (JSONBin.io)
 ━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+const SYNC_CFG_KEY='hinomaru_sync_cfg';
+let syncCfg={apiKey:'',binId:''};
 let syncStatus={lastSync:null,syncing:false};
 
-function isSyncEnabled(){return true;}
-
-
-
-/* 自動保存タイマー */
-let cloudSaveTimer=null;
-function scheduleCloudSave(){
-  clearTimeout(cloudSaveTimer);
-  cloudSaveTimer=setTimeout(()=>{
-    pushToCloud();
-  },1000);
+function loadSyncCfg(){
+  const s=localStorage.getItem(SYNC_CFG_KEY);
+  if(s){try{syncCfg=JSON.parse(s);}catch(e){}}
+}
+function saveSyncCfg(){
+  localStorage.setItem(SYNC_CFG_KEY,JSON.stringify(syncCfg));
+}
+function isSyncEnabled(){
+  return !!(syncCfg?.apiKey && syncCfg?.binId);
 }
 
-/* クラウドへ保存（JSONBin 直接） */
 async function pushToCloud(){
+  if(!isSyncEnabled()||syncStatus.syncing)return;
+  syncStatus.syncing=true;
   try{
-    const {apiKey,binId}=syncCfg;
-    if(!apiKey||!binId)return;
-    await fetch(`https://api.jsonbin.io/v3/b/${binId}`,{
+    const{apiKey,binId}=syncCfg;
+    const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}`,{
       method:'PUT',
       headers:{'X-Master-Key':apiKey,'Content-Type':'application/json'},
       body:JSON.stringify(DB)
     });
-    syncStatus.lastSync=new Date();
-    updateSyncTime();
-    console.log('Cloud push requested');
-  }catch(e){console.warn('Cloud push failed',e);}
+    if(res.ok){
+      syncStatus.lastSync=new Date();
+      updateSyncTime();
+      console.log('✅ Cloud push succeeded');
+    }
+  }catch(e){
+    console.warn('Cloud push error:',e);
+  }
+  syncStatus.syncing=false;
 }
 
-/* クラウドから読み込み（JSONBin 直接） */
 async function pullFromCloud(){
   if(!isSyncEnabled())return false;
   try{
-    const {apiKey,binId}=syncCfg;
-    if(!apiKey||!binId)return false;
+    const{apiKey,binId}=syncCfg;
     const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`,{
-      method:'GET',
       headers:{'X-Master-Key':apiKey,'X-Bin-Meta':'false'}
     });
     const json=await res.json();
@@ -4409,19 +4412,171 @@ async function pullFromCloud(){
     DB=merged;
     save();
     syncStatus.lastSync=new Date();
+    updateSyncTime();
+    console.log('✅ Cloud pull succeeded');
     return true;
-  }catch(e){console.warn('Cloud pull failed',e);return false;}
+  }catch(e){
+    console.warn('Cloud pull error:',e);
+    return false;
+  }
 }
 
-/* 5秒ごとにクラウドから同期 */
-setInterval(()=>{
-  pullFromCloud().catch(e=>console.warn('Poll sync error',e));
-},5000);
+/* 新しいBINを作成 */
+async function createBin(apiKey){
+  const res=await fetch('https://api.jsonbin.io/v3/b',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'X-Master-Key':apiKey,
+      'X-Bin-Name':'hinomaru-traffic',
+      'X-Bin-Private':'true'
+    },
+    body:JSON.stringify(DB)
+  });
+  if(!res.ok){
+    const e=await res.json().catch(()=>({}));
+    throw new Error(e.message||'BIN作成失敗 (status '+res.status+')');
+  }
+  const d=await res.json();
+  return d.metadata.id;
+}
+
+/* 共有コードを生成 */
+function makeShareCode(apiKey,binId){
+  return btoa(unescape(encodeURIComponent(apiKey+'::'+binId)));
+}
+function parseShareCode(code){
+  try{
+    const str=decodeURIComponent(escape(atob(code.trim())));
+    const [apiKey,binId]=str.split('::');
+    if(!apiKey||!binId)throw new Error();
+    return{apiKey,binId};
+  }catch{return null;}
+}
+
+/* 初回セットアップ（1人目） */
+async function setupCloud(){
+  const key=document.getElementById('setupApiKey').value.trim();
+  const msg=document.getElementById('setupMsg');
+  const btn=document.getElementById('setupBtn');
+  if(!key){msg.textContent='APIキーを入力してください';msg.style.display='block';return;}
+  btn.textContent='設定中...';btn.disabled=true;
+  msg.style.display='none';
+  try{
+    const binId=await createBin(key);
+    syncCfg={apiKey:key,binId};
+    saveSyncCfg();
+    // URLハッシュを更新してブックマークで自動接続できるようにする
+    const code=makeShareCode(key,binId);
+    history.replaceState(null,'','#'+code);
+    renderSyncModal();
+    showSyncPanel();
+  }catch(e){
+    msg.textContent='エラー: '+e.message+' — APIキーを確認してください';
+    msg.style.display='block';
+  }
+  btn.textContent='🔑 設定してチームに共有する';btn.disabled=false;
+}
+
+/* 共有コードで参加（2〜3人目）*/
+function joinWithCode(){
+  const code=document.getElementById('joinCodeInput').value.trim();
+  _applyJoinCode(code);
+}
+function joinWithCode2(){
+  const code=document.getElementById('joinCodeInput2').value.trim();
+  _applyJoinCode(code);
+}
+async function _applyJoinCode(code){
+  const parsed=parseShareCode(code);
+  if(!parsed){alert('共有コードが正しくありません。送ってもらったコードをそのまま貼り付けてください');return;}
+  syncCfg=parsed;
+  saveSyncCfg();
+  // URLハッシュに保存→次回以降ブックマークで自動接続
+  history.replaceState(null,'','#'+code.trim());
+  try{
+    const ok=await pullFromCloud();
+    if(ok){
+      renderSyncModal();
+      showSyncPanel();
+      closeModal('syncModal');
+      nav('home');
+      alert('✅ チームのデータを取得しました！\n\nこのページをブックマークすれば次回から自動接続されます📌');
+    }else{
+      alert('接続できませんでした。共有コードを確認してください');
+    }
+  }catch(e){
+    console.warn('Team sync error',e);
+    alert('接続中にエラーが発生しました');
+  }
+}
+
+/* 今すぐ同期 */
+async function syncNow(){
+  const btn=event.target;btn.textContent='同期中...';btn.disabled=true;
+  try{
+    const ok=await pullFromCloud();
+    if(ok){nav(document.getElementById('pageTitle').dataset.page||'home');}
+  }catch(e){
+    console.warn('Sync now error',e);
+  }finally{
+    btn.textContent='今すぐ同期';btn.disabled=false;
+    updateSyncTime();
+  }
+}
+
+function updateSyncTime(){
+  const el=document.getElementById('syncLastTime');
+  if(el&&syncStatus.lastSync){
+    el.textContent='最終同期：'+syncStatus.lastSync.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+  }
+}
+function copyShareCode(){
+  const code=document.getElementById('shareCodeInput').value;
+  navigator.clipboard.writeText(code).then(()=>{
+    const m=document.getElementById('shareCopyMsg');
+    m.style.display='block';setTimeout(()=>m.style.display='none',3000);
+  }).catch(e=>console.warn('Clipboard error:',e));
+}
+function resetSyncConfig(){
+  if(!confirm('同期設定をリセットしますか？（データは消えません）'))return;
+  syncCfg={apiKey:'',binId:''};
+  saveSyncCfg();
+  renderSyncModal();
+}
+function showSyncPanel(){
+  const active=isSyncEnabled();
+  document.getElementById('syncSetupPanel').style.display=active?'none':'block';
+  document.getElementById('syncJoinPanel').style.display=active?'none':'block';
+  document.getElementById('syncActivePanel').style.display=active?'block':'none';
+  if(active){
+    document.getElementById('shareCodeInput').value=makeShareCode(syncCfg.apiKey,syncCfg.binId);
+    updateSyncTime();
+  }
+}
+function renderSyncModal(){showSyncPanel();}
+
+function openSyncModal(){
+  renderSyncModal();
+  openModal('syncModal');
+}
+
+/* バックアップDL */
+function downloadDB(){
+  const json=JSON.stringify(DB,null,2);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));
+  a.download=`hinomaru_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+function exportDB(){downloadDB();}
+function importDB(){}
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━
    INIT
 ━━━━━━━━━━━━━━━━━━━━━━━━ */
 load();
+loadSyncCfg();
 renderHome();
 
 // Cloud sync 自動初期化を完全に無効化（CORS エラー防止）
@@ -4438,10 +4593,10 @@ document.addEventListener('visibilitychange',()=>{
   }).catch(e=>console.warn('Visibility sync error',e));
 });
 
-// 定期ポーリング：3秒ごとに Google Sheets から同期（費用ゼロ）
+// 定期ポーリング：5秒ごとに JSONBin から同期
 setInterval(()=>{
   if(isSyncEnabled()) pullFromCloud().catch(e=>console.warn('Poll sync error',e));
-}, 3000);
+}, 5000);
 
 document.addEventListener('input',e=>{
   if(e.target.closest('.tab-pane#tab-proposal'))renderProposal();
