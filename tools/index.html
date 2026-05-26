@@ -4589,9 +4589,7 @@ renderHome();
 // URLハッシュの自動接続機能はデフォルトで非アクティブ
 // ユーザーが手動で「チーム接続」ボタンをクリックした場合のみ実行
 
-// タブに戻ってきた時の自動同期を無効化（CORS エラー防止）
-// ユーザーが「今すぐ同期」ボタンを手動でクリックした場合のみ実行
-/*
+// タブに戻ってきた時の自動同期（Google Sheets は CORS 対応）
 document.addEventListener('visibilitychange',()=>{
   if(!document.hidden&&isSyncEnabled()) pullFromCloud().then(ok=>{
     if(ok){
@@ -4600,7 +4598,6 @@ document.addEventListener('visibilitychange',()=>{
     }
   }).catch(e=>console.warn('Visibility sync error',e));
 });
-
 
 document.addEventListener('input',e=>{
   if(e.target.closest('.tab-pane#tab-proposal'))renderProposal();
