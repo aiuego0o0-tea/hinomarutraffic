@@ -4376,12 +4376,31 @@ async function pushToCloud(){
   }catch(e){console.warn('Cloud push failed',e);}
 }
 
+/* JSONP でシート読み込み（CORS回避） */
+function pullSheetJsonp(){
+  return new Promise((resolve,reject)=>{
+    const callbackName='jsonpCallback_'+Date.now();
+    window[callbackName]=function(data){
+      delete window[callbackName];
+      script.remove();
+      resolve(data);
+    };
+    const script=document.createElement('script');
+    script.src=GAS_URL+'?action=pull_sheet_jsonp&callback='+callbackName;
+    script.onerror=function(){
+      delete window[callbackName];
+      script.remove();
+      reject(new Error('JSONP load failed'));
+    };
+    document.body.appendChild(script);
+  });
+}
+
 /* クラウドから読み込み（5秒ごと自動同期） */
 async function pullFromCloud(){
   if(!isSyncEnabled())return false;
   try{
-    const res=await fetch(GAS_URL+'?action=pull_sheet');
-    const json=await res.json();
+    const json=await pullSheetJsonp();
     if(!json.success)return false;
 
     const remote=json.data||{};
