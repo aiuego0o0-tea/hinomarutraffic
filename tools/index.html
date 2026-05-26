@@ -4599,6 +4599,11 @@ document.addEventListener('visibilitychange',()=>{
   }).catch(e=>console.warn('Visibility sync error',e));
 });
 
+// 定期ポーリング：3秒ごとに Google Sheets から同期（費用ゼロ）
+setInterval(()=>{
+  if(isSyncEnabled()) pullFromCloud().catch(e=>console.warn('Poll sync error',e));
+}, 3000);
+
 document.addEventListener('input',e=>{
   if(e.target.closest('.tab-pane#tab-proposal'))renderProposal();
 });
