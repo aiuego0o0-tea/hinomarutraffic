@@ -4353,7 +4353,7 @@ function deleteManualItem(id){
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━
-   CLOUD SYNC (JSONBin.io)
+   CLOUD SYNC (Google Sheets via GAS)
 ━━━━━━━━━━━━━━━━━━━━━━━━ */
 const SYNC_CFG_KEY='homemaru_sync_v1';
 let syncCfg={apiKey:'',binId:''};
@@ -4366,7 +4366,8 @@ function loadSyncCfg(){
 function saveSyncCfg(){
   localStorage.setItem(SYNC_CFG_KEY,JSON.stringify(syncCfg));
 }
-function isSyncEnabled(){return !!(syncCfg.apiKey&&syncCfg.binId);}
+// Cloud Sync enabled by default - GAS handles all syncing automatically
+function isSyncEnabled(){return true;}
 
 /* クラウドへ保存 */
 async function pushToCloud(){
@@ -4375,8 +4376,6 @@ async function pushToCloud(){
   try{
     const params=new URLSearchParams();
     params.append('action','push_cloud');
-    params.append('binId',syncCfg.binId);
-    params.append('apiKey',syncCfg.apiKey);
     params.append('data',JSON.stringify(DB));
 
     const res=await fetch(GAS_URL,{method:'POST',body:params});
@@ -4395,8 +4394,6 @@ async function pullFromCloud(){
   try{
     const params=new URLSearchParams();
     params.append('action','pull_cloud');
-    params.append('binId',syncCfg.binId);
-    params.append('apiKey',syncCfg.apiKey);
 
     const res=await fetch(GAS_URL,{method:'POST',body:params});
     const json=await res.json();

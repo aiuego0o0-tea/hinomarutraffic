@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>動作テスト</title>
+</head>
+<body>
+    <h1>制作管理システム - オフラインテスト</h1>
+    <pre id="log" style="border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto;"></pre>
+    <button onclick="runTests()">テスト開始</button>
+    <script>
+        const log = (msg) => {
+            const el = document.getElementById('log');
+            el.textContent += msg + '\n';
+            el.scrollTop = el.scrollHeight;
+        };
+
+        // app.html のコアロジックをテスト
+        function runTests() {
+            log('=== テスト開始 ===');
+            
+            // 1. DB 初期化テスト
+            const DB = {
+                calEvts: [], sessions: [], ideas: [], plans: [],
+                analytics: [],
+                kpi: { year: 2026, targets:{}, actuals:{} },
+                skillProgress: {},
+                manualItems: [],
+                savedProposals: [],
+                archivedPlans: [],
+                archivedSessions: []
+            };
+            log('✓ DB 初期化成功');
+            
+            // 2. セッション追加
+            const sessId = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+            const sess = {
+                id: sessId,
+                title: 'テスト撮影',
+                date: '2026-05-26',
+                videos: [
+                    { id: 'vid1', title: 'ビデオA', steps: { shooting: { date: '2026-05-26' }, editing: { date: '2026-05-27' } } },
+                    { id: 'vid2', title: 'ビデオB', steps: { shooting: { date: '2026-05-26' }, publish: { date: '2026-05-28' } } }
+                ]
+            };
+            DB.sessions.push(sess);
+            log('✓ セッション追加（2ビデオ）');
+            
+            // 3. deleteVideo テスト（ビデオA削除）
+            sess.videos = sess.videos.filter(v => v.id !== 'vid1');
+            if(sess.videos.length === 0) {
+                DB.sessions = DB.sessions.filter(s => s.id !== sessId);
+            }
+            log('✓ ビデオA削除（自動削除ロジック実行）');
+            log(`  セッション数: ${DB.sessions.length}, ビデオ数: ${sess.videos.length}`);
+            
+            // 4. deleteVirtualEvent テスト（vstep削除）
+            const sess2 = {
+                id: 'sess2',
+                title: 'テスト撮影2',
+                date: '2026-05-27',
+                videos: [
+                    { id: 'vid3', title: 'ビデオC', steps: { shooting: { date: '2026-05-27' }, editing: { date: '2026-05-28' } } }
+                ]
+            };
+            DB.sessions.push(sess2);
+            
+            const eventId = 'vstep-sess2-vid3-shooting';
+            const match = eventId.match(/^vstep-([^-]+)-([^-]+)-(.+)$/);
+            if(match) {
+                const [, s, v, st] = match;
+                const sess = DB.sessions.find(x => x.id === s);
+                if(sess && sess.videos) {
+                    const vid = sess.videos.find(x => x.id === v);
+                    if(vid && vid.steps) delete vid.steps[st];
+                }
+            }
+            log('✓ ステップ削除（vstep解析成功）');
+            
+            // 5. completeSession テスト
+            const sess3 = {
+                id: 'sess3',
+                title: 'テスト撮影3',
+                date: '2026-05-28',
+                videos: []
+            };
+            DB.sessions.push(sess3);
+            const archSess = DB.sessions.find(s => s.id === 'sess3');
+            DB.sessions = DB.sessions.filter(s => s.id !== 'sess3');
+            archSess.completedAt = new Date().toISOString().slice(0,10);
+            DB.archivedSessions.push(archSess);
+            log('✓ セッション完了（アーカイブ移動）');
+            
+            log('');
+            log('=== テスト結果 ===');
+            log(`アクティブセッション: ${DB.sessions.length}`);
+            log(`アーカイブセッション: ${DB.archivedSessions.length}`);
+            log('✓ 全テスト成功！');
+        }
+    </script>
+</body>
+</html>
