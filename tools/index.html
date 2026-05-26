@@ -4360,44 +4360,30 @@ let syncStatus={lastSync:null,syncing:false};
 function isSyncEnabled(){return true;}
 
 /* クラウドへ保存 */
-function pushToCloud(){
-  if(!isSyncEnabled()||syncStatus.syncing)return;
-  syncStatus.syncing=true;
+async function pushToCloud(){
   try{
-    const form=document.createElement('form');
-    form.method='POST';
-    form.action=GAS_URL;
-    form.style.display='none';
-
-    const inp1=document.createElement('input');
-    inp1.name='action';
-    inp1.value='push_sheet';
-    form.appendChild(inp1);
-
-    const inp2=document.createElement('input');
-    inp2.name='data';
-    inp2.value=JSON.stringify(DB);
-    form.appendChild(inp2);
-
-    document.body.appendChild(form);
-    form.submit();
-    form.remove();
-
+    const params=new URLSearchParams();
+    params.append('action','push_sheet');
+    params.append('data',JSON.stringify(DB));
+    await fetch(GAS_URL,{
+      method:'POST',
+      mode:'no-cors',
+      body:params
+    });
     syncStatus.lastSync=new Date();
     updateSyncTime();
+    console.log('Cloud push requested');
   }catch(e){console.warn('Cloud push failed',e);}
-  syncStatus.syncing=false;
 }
 
-/* クラウドから読み込み（GAS） */
+/* クラウドから読み込み（5秒ごと自動同期） */
 async function pullFromCloud(){
   if(!isSyncEnabled())return false;
   try{
-    const url=GAS_URL+'?action=pull_sheet';
-    const res=await fetch(url);
-    if(!res.ok)return false;
-
+    const res=await fetch(GAS_URL+'?action=pull_sheet');
     const json=await res.json();
+    if(!json.success)return false;
+
     const remote=json.data||{};
     // スマートマージ: ローカルデータが多い場合は保持する
     const merged={...DB};
@@ -4423,6 +4409,20 @@ async function pullFromCloud(){
     return true;
   }catch(e){console.warn('Cloud pull failed',e);return false;}
 }
+
+/* 自動保存タイマー */
+let cloudSaveTimer=null;
+function scheduleCloudSave(){
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer=setTimeout(()=>{
+    pushToCloud();
+  },1000);
+}
+
+/* 5秒ごとにクラウドから同期 */
+setInterval(()=>{
+  pullFromCloud().catch(e=>console.warn('Poll sync error',e));
+},5000);
 
 /* 新しいBINを作成 */
 async function createBin(apiKey){
