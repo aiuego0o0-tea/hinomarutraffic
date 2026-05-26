@@ -4379,19 +4379,24 @@ async function pushToCloud(){
 /* JSONP でシート読み込み（CORS回避） */
 function pullSheetJsonp(){
   return new Promise((resolve,reject)=>{
-    const callbackName='jsonpCallback_'+Date.now();
+    const callbackName='jsonpCallback_'+Date.now()+'_'+Math.floor(Math.random()*100000);
+
+    const script=document.createElement('script');
+
     window[callbackName]=function(data){
       delete window[callbackName];
       script.remove();
       resolve(data);
     };
-    const script=document.createElement('script');
-    script.src=GAS_URL+'?action=pull_sheet_jsonp&callback='+callbackName;
+
+    script.src=GAS_URL+'?action=pull_sheet_jsonp&callback='+encodeURIComponent(callbackName);
+
     script.onerror=function(){
       delete window[callbackName];
       script.remove();
       reject(new Error('JSONP load failed'));
     };
+
     document.body.appendChild(script);
   });
 }
